@@ -1,7 +1,4 @@
 
-
-https://github.com/user-attachments/assets/83c0522f-11e1-4ad9-886b-23e64f041f20
-
 # PayLink
 
 **PayLink** is a payment-request dApp on the Stellar **Testnet**: a creator makes a
