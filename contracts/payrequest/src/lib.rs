@@ -50,6 +50,30 @@ impl PayRequest {
         id
     }
 
+    /// Mark a request paid by `payer`. Emits `("paid", payer)` with `id`.
+    ///
+    /// Value transfer: **fallback** path — the frontend (or caller) settles XLM
+    /// via a classic payment first; this function records paid status + event.
+    /// L3 adds an inter-contract receipt mint on top of this.
+    pub fn pay(env: Env, id: u32, payer: Address) {
+        payer.require_auth();
+        let mut req: Request = env
+            .storage()
+            .persistent()
+            .get(&Key::Req(id))
+            .expect("no request");
+        if req.paid {
+            panic!("already paid");
+        }
+
+        req.paid = true;
+        req.payer = Some(payer.clone());
+        env.storage().persistent().set(&Key::Req(id), &req);
+        env.storage().persistent().extend_ttl(&Key::Req(id), 100, 1000);
+
+        env.events().publish((symbol_short!("paid"), payer), id);
+    }
+
     /// Read a payment request by id.
     pub fn get(env: Env, id: u32) -> Request {
         env.storage()
