@@ -1,11 +1,9 @@
 import { TransactionBuilder, Operation, Asset, BASE_FEE } from '@stellar/stellar-sdk';
-import { signTransaction } from '@stellar/freighter-api';
 import { horizon, NETWORK_PASSPHRASE, txUrl } from './stellar';
+import { signWithKit } from './walletKit';
 
 /**
- * Build, sign (via Freighter), and submit a native XLM payment on testnet.
- * Returns the transaction hash and an explorer URL — show these to the user
- * (the L1 "transaction result" requirement).
+ * Build, sign (via StellarWalletsKit), and submit a native XLM payment on testnet.
  */
 export async function sendXlm(
   from: string,
@@ -22,13 +20,8 @@ export async function sendXlm(
     .setTimeout(180)
     .build();
 
-  const signed = await signTransaction(tx.toXDR(), {
-    networkPassphrase: NETWORK_PASSPHRASE,
-    address: from,
-  });
-  if (signed.error) throw new Error('SIGN_REJECTED');
-
-  const signedTx = TransactionBuilder.fromXDR(signed.signedTxXdr, NETWORK_PASSPHRASE);
+  const signedXdr = await signWithKit(tx.toXDR(), from);
+  const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
   const res = await horizon.submitTransaction(signedTx);
   return { hash: res.hash, url: txUrl(res.hash) };
 }
