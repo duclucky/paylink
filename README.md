@@ -195,27 +195,6 @@ paylink/
 └── README.md
 ```
 
-## Vercel deploy (you)
-
-1. https://vercel.com → **Add New Project** → import `duclucky/paylink`
-2. **Root Directory:** `web`
-3. Framework: Vite · Build: `npm run build` · Output: `dist`
-4. Install command: `npm install --ignore-scripts` (recommended on CI too)
-5. Deploy → paste URL under **Live demo** above
-
-## Demo video (you)
-
-1–2 min screen recording: connect → create request → open link / pay → show paid
-status + receipt balance + explorer tx. Host on YouTube (unlisted) or Loom.
-
-## Human-only
-
-- Wallet unlock / transaction approvals  
-- GitHub push (done when you ask)  
-- Vercel authorize  
-- Screenshots + demo video  
-- Rise In **Submit for review**  
-- Never commit secret keys
 
 ## License
 
