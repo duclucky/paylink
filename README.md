@@ -1,43 +1,47 @@
 # PayLink
 
 **PayLink** is a payment-request dApp on the Stellar **Testnet**: a creator makes a
-request for a specific XLM amount; anyone can open the link and pay it; the request
-tracks paid/unpaid status live; paying issues an on-chain receipt via **inter-contract
-communication** (`PayRequest` → `ReceiptToken.mint`).
+request for a specific XLM amount; anyone opens the shareable link and pays; the
+request tracks paid/unpaid status live; paying issues an on-chain **receipt** via
+**inter-contract communication** (`PayRequest` → `ReceiptToken.mint`).
 
-Built for Rise In **Stellar Journey to Mastery** — **Level 3 / Orange Belt** (includes
-wallet + payment shell from L1).
-
-| Layer | Status |
-|-------|--------|
-| L1 shell (Freighter, balance, send XLM) | ✅ |
-| Contracts (`payrequest` + `receipt`, inter-contract mint) | ✅ Verified on testnet |
-| Frontend (multi-wallet, create/pay, events) | ⏳ Next |
-| CI + Vercel + demo video | ⏳ Later |
+Built for Rise In **Stellar Journey to Mastery — Level 3 / Orange Belt**.
 
 ## Live demo
 
 `<PLACEHOLDER: paste Vercel URL after deploy>`
 
+## Features
+
+- **Multi-wallet** connect/disconnect via StellarWalletsKit (Freighter, xBull, Albedo, Lobstr, …)
+- XLM balance + **Friendbot** funding
+- **Create** an on-chain payment request → shareable `?id=<n>` link
+- **Pay** a request: classic XLM settlement + contract `pay` (pending → success/fail)
+- **ReceiptToken** balance after pay (proves inter-contract mint)
+- **Live events** polled from Soroban RPC (`created` / `paid`)
+- Loading + error states; **mobile-responsive** layout
+- Classic send-XLM primitive (collapsible)
+- Contract tests + frontend Vitest + **GitHub Actions CI**
+
 ## Architecture
 
 ```
-┌─────────────┐  create / pay / get   ┌──────────────┐
-│  Frontend   │ ───────────────────►  │  PayRequest  │
-│  (React)    │                       │  (Soroban)   │
-└─────────────┘                       └──────┬───────┘
-                                             │ on pay(): receipt.mint(payer, amount)
-                                             ▼
-                                      ┌──────────────┐
-                                      │ ReceiptToken │
-                                      │ mint/balance │
-                                      └──────────────┘
+┌──────────────┐  create / pay / get   ┌──────────────┐
+│   Frontend   │ ───────────────────►  │  PayRequest  │
+│ React + Kit  │                       │  (Soroban)   │
+└──────────────┘                       └──────┬───────┘
+       │ classic XLM (fallback)               │ pay → receipt.mint
+       ▼                                      ▼
+  Horizon payment                      ┌──────────────┐
+                                       │ ReceiptToken │
+                                       └──────────────┘
 ```
 
-**Value transfer (in use):** **Fallback** — XLM is settled with a classic Stellar
-payment from the frontend (or separately); `pay` marks the request paid, emits
-`paid`, and **mints a receipt** via inter-contract call. Native SAC settlement is
-not used in this version (keeps auth/demo simple on testnet).
+### Value transfer
+
+**Fallback (in use):** the frontend sends a classic XLM `payment` to the creator,
+then calls `pay(id, payer)` to mark the request paid, emit `paid`, and mint a
+receipt via inter-contract call. Native SAC settlement is not used in this build.
 
 ## Deployed contracts (testnet — real)
 
@@ -48,163 +52,168 @@ not used in this version (keeps auth/demo simple on testnet).
 
 | Evidence | Value |
 |----------|--------|
-| **Cross-call `pay` tx** (emits `paid`, mints receipt) | [`c162a1eea1b6a3d700a2f3397e1a609cb355dd1c7b08db4761d5241425686264`](https://stellar.expert/explorer/testnet/tx/c162a1eea1b6a3d700a2f3397e1a609cb355dd1c7b08db4761d5241425686264) |
+| **Contract `pay` tx** (cross-call) | [`c162a1eea1b6a3d700a2f3397e1a609cb355dd1c7b08db4761d5241425686264`](https://stellar.expert/explorer/testnet/tx/c162a1eea1b6a3d700a2f3397e1a609cb355dd1c7b08db4761d5241425686264) |
 | **Create request tx** | [`e672cc70721db26050cbfd8f8a8bd174c68ade2eac3572fec3e6cfa6f3fec7ee`](https://stellar.expert/explorer/testnet/tx/e672cc70721db26050cbfd8f8a8bd174c68ade2eac3572fec3e6cfa6f3fec7ee) |
-| Receipt balance after `pay` | `0` → **`100`** (proves inter-contract mint) |
+| Receipt balance after `pay` | `0` → **`100`** |
 
-Network: **Testnet** · Horizon: `https://horizon-testnet.stellar.org` ·
-Soroban RPC: `https://soroban-testnet.stellar.org` ·
-Explorer: https://stellar.expert/explorer/testnet
+- **Network:** Testnet (`Test SDF Network ; September 2015`)
+- **Horizon:** https://horizon-testnet.stellar.org
+- **Soroban RPC:** https://soroban-testnet.stellar.org
+- **Explorer:** https://stellar.expert/explorer/testnet
 
-## Contract API
+## Tech stack
 
-### `PayRequest`
+- React 19 + Vite 6 + TypeScript + Tailwind CSS v4
+- `@creit.tech/stellar-wallets-kit` + `@stellar/stellar-sdk`
+- Soroban contracts: Rust + `soroban-sdk = "22"`, stellar-cli 27
+- Vitest + GitHub Actions
 
-| Function | Description |
-|----------|-------------|
-| `init(receipt_id)` | Store ReceiptToken address (once) |
-| `create(creator, amount) -> u32` | New request; event `created` |
-| `pay(id, payer)` | Mark paid + **`receipt.mint(payer, amount)`**; event `paid` |
-| `get(id) -> Request` | Read request |
-| `receipt_id() -> Address` | Configured receipt contract |
+## Run locally
 
-### `ReceiptToken`
+### Prerequisites
 
-| Function | Description |
-|----------|-------------|
-| `mint(to, amount) -> i128` | Credit receipt units; returns new balance |
-| `balance(to) -> i128` | Read balance |
+1. Node.js 20+
+2. [Freighter](https://www.freighter.app/) (or another kit-supported wallet) on **Testnet**
+3. (Contracts only) Rust + `wasm32v1-none` + `stellar` CLI
 
-Amounts are **stroops** (`i128` / JS `bigint`). 1 XLM = 10_000_000 stroops.
-
-## Deploy workflow (testnet)
-
-**Build order:** always build `receipt` before `payrequest` (caller imports
-`receipt.wasm`).
-
-```bash
-# Identity (once)
-stellar keys generate deployer --network testnet --fund
-stellar keys address deployer
-
-# Build callee first, then caller
-cd contracts/receipt && stellar contract build
-cd ../payrequest     && stellar contract build
-
-# Deploy
-stellar contract deploy \
-  --wasm contracts/receipt/target/wasm32v1-none/release/receipt.wasm \
-  --source deployer --network testnet
-# → RECEIPT_ID
-
-stellar contract deploy \
-  --wasm contracts/payrequest/target/wasm32v1-none/release/payrequest.wasm \
-  --source deployer --network testnet
-# → PAYREQUEST_ID
-
-# Wire inter-contract
-stellar contract invoke --id $PAYREQUEST_ID --source deployer --network testnet \
-  -- init --receipt_id $RECEIPT_ID
-
-# Smoke: create → pay → read receipt balance
-DEPLOYER=$(stellar keys address deployer)
-stellar contract invoke --id $PAYREQUEST_ID --source deployer --network testnet \
-  -- create --creator $DEPLOYER --amount 100
-# → request id (e.g. 1)
-
-stellar contract invoke --id $RECEIPT_ID --source deployer --network testnet \
-  -- balance --to $DEPLOYER
-# → 0
-
-stellar contract invoke --id $PAYREQUEST_ID --source deployer --network testnet \
-  -- pay --id 1 --payer $DEPLOYER
-# → emits paid; mints receipt
-
-stellar contract invoke --id $RECEIPT_ID --source deployer --network testnet \
-  -- balance --to $DEPLOYER
-# → 100  (cross-call verified)
-
-# TS bindings (for frontend, next phase)
-stellar contract bindings typescript --network testnet \
-  --id $PAYREQUEST_ID --output-dir web/src/contracts/payrequest
-stellar contract bindings typescript --network testnet \
-  --id $RECEIPT_ID --output-dir web/src/contracts/receipt
-```
-
-**Wasm path note:** CLI v27 outputs to `target/wasm32v1-none/release/` (not
-`wasm32-unknown-unknown`). Target: `rustup target add wasm32v1-none`.
-
-**Cargo.lock:** committed for both crates. If `cargo test` fails with
-`ChaCha20Rng: CryptoRng`, run:
-`cargo update -p ed25519-dalek@3.0.0 --precise 2.2.0`.
-
-## Run frontend (L1 shell — until L3 UI lands)
+### Frontend
 
 ```bash
 cd web
-npm install
-npm run dev   # http://localhost:5173
+npm install --ignore-scripts   # ignore-scripts: wallets-kit has a broken Windows postinstall
+npm run dev                    # http://localhost:5173
 npm test
 npm run build
 ```
 
-Prerequisites: Node 20+, [Freighter](https://www.freighter.app/) on **Testnet**.
-
-## Tests (contracts)
+### Contracts
 
 ```bash
-cd contracts/receipt && cargo test --locked
-cd ../payrequest     && cargo test --locked
+# Build order: receipt FIRST (payrequest imports its wasm)
+cd contracts/receipt && stellar contract build && cargo test --locked
+cd ../payrequest     && stellar contract build && cargo test --locked
 ```
 
-Current counts: **receipt ≥3**, **payrequest ≥5** (including
-`receipt_balance_increases_after_pay` for the inter-contract path).
+### Deploy + init (if redeploying)
 
-## Features (current)
+```bash
+stellar keys generate deployer --network testnet --fund   # once
+DEPLOYER=$(stellar keys address deployer)
 
-- Connect / disconnect Freighter; XLM balance; send XLM + tx hash (L1 shell)
-- `PayRequest` + `ReceiptToken` on testnet
-- Inter-contract mint on `pay` (**verified**: receipt balance increased)
-- Events: `created`, `paid`
-- `extend_ttl` on instance/persistent writes
-- Contract unit tests with locked deps
+cd contracts/receipt && stellar contract build
+RECEIPT_ID=$(stellar contract deploy \
+  --wasm target/wasm32v1-none/release/receipt.wasm \
+  --source deployer --network testnet)
 
-## Screenshots / L3 submission evidence
+cd ../payrequest && stellar contract build
+PAY_ID=$(stellar contract deploy \
+  --wasm target/wasm32v1-none/release/payrequest.wasm \
+  --source deployer --network testnet)
 
-| Item | Status |
-|------|--------|
-| Contract address | ✅ above |
-| Contract-interaction tx hash | ✅ `pay` tx above |
-| Mobile UI | `<PLACEHOLDER: after frontend>` |
-| CI green | `<PLACEHOLDER: after CI + push>` |
-| Test output 3+ passing | Run `cargo test --locked` in both crates |
-| Live demo (Vercel) | `<PLACEHOLDER: paste after deploy>` |
+stellar contract invoke --id $PAY_ID --source deployer --network testnet \
+  -- init --receipt_id $RECEIPT_ID
+
+# Smoke cross-call
+stellar contract invoke --id $PAY_ID --source deployer --network testnet \
+  -- create --creator $DEPLOYER --amount 100
+stellar contract invoke --id $PAY_ID --source deployer --network testnet \
+  -- pay --id 1 --payer $DEPLOYER
+stellar contract invoke --id $RECEIPT_ID --source deployer --network testnet \
+  -- balance --to $DEPLOYER
+# expect 100
+```
+
+### Regenerate TS bindings
+
+```bash
+stellar contract bindings typescript --network testnet \
+  --id <PAYREQUEST_ID> --output-dir web/src/contracts/payrequest
+stellar contract bindings typescript --network testnet \
+  --id <RECEIPT_ID> --output-dir web/src/contracts/receipt
+```
+
+## How to use the app
+
+1. **Connect wallet** → pick Freighter (Testnet) or another option in the modal.
+2. If balance is 0 → **Fund (Friendbot)**.
+3. **Create payment request** → enter XLM amount → approve → copy the shareable link.
+4. Open the link (or enter request id) as a payer → **Pay (XLM + mint receipt)**.
+5. Approve two signatures: classic payment, then Soroban `pay`.
+6. Confirm request shows **Paid**, receipt balance increases, and live events update.
+
+## Tests
+
+```bash
+# Frontend (≥3 tests)
+cd web && npm test
+# → amounts, request-link parsing, error mapping (11 tests)
+
+# Contracts
+cd contracts/receipt && cargo test --locked      # 3+
+cd ../payrequest && cargo test --locked          # 5+ incl. inter-contract
+```
+
+## CI/CD
+
+GitHub Actions (`.github/workflows/ci.yml`) on push/PR to `main`/`master`:
+
+1. **frontend:** `npm ci --ignore-scripts` → lint → test → build  
+2. **contracts:** build/test `receipt`, then build/test `payrequest` (wasm order)
+
+`<PLACEHOLDER: screenshot of green CI run on GitHub Actions>`
+
+## Screenshots (submission evidence)
+
+| Item | File / status |
+|------|----------------|
+| Mobile UI | `<PLACEHOLDER: docs/screenshots/mobile.png>` |
+| Wallet options modal | `<PLACEHOLDER: docs/screenshots/wallet-picker.png>` |
+| Create + share link | `<PLACEHOLDER: docs/screenshots/create-request.png>` |
+| Pay + receipt balance | `<PLACEHOLDER: docs/screenshots/pay-receipt.png>` |
+| CI green | `<PLACEHOLDER: docs/screenshots/ci-green.png>` |
+| Test output 3+ | Run `npm test` / `cargo test --locked` and screenshot |
 | Demo video 1–2 min | `<PLACEHOLDER: paste YouTube/Loom link>` |
-
-### Frontend screenshots (fill when UI is done)
-
-`<PLACEHOLDER: mobile UI / create-pay flow / receipt balance>`
 
 ## Project structure
 
 ```
 paylink/
-├── web/                      # React + Vite + TS (L1 shell; L3 UI next)
+├── web/
+│   ├── src/
+│   │   ├── App.tsx
+│   │   ├── hooks/useWallet.ts
+│   │   ├── lib/          # stellar, payments, contracts, events, amounts, errors
+│   │   └── contracts/    # generated TS bindings (payrequest, receipt)
+│   └── package.json
 ├── contracts/
-│   ├── receipt/              # ReceiptToken (mint, balance)
-│   └── payrequest/           # PayRequest → imports receipt.wasm
-├── docs/screenshots/
+│   ├── receipt/          # ReceiptToken
+│   └── payrequest/       # PayRequest → contractimport receipt.wasm
+├── .github/workflows/ci.yml
 └── README.md
 ```
 
-## Human-only steps
+## Vercel deploy (you)
 
-- Approve Freighter signatures for the app
-- Push / create GitHub (repo already exists)
-- Vercel deploy authorization
-- Demo video recording + Rise In submit
+1. https://vercel.com → **Add New Project** → import `duclucky/paylink`
+2. **Root Directory:** `web`
+3. Framework: Vite · Build: `npm run build` · Output: `dist`
+4. Install command: `npm install --ignore-scripts` (recommended on CI too)
+5. Deploy → paste URL under **Live demo** above
+
+## Demo video (you)
+
+1–2 min screen recording: connect → create request → open link / pay → show paid
+status + receipt balance + explorer tx. Host on YouTube (unlisted) or Loom.
+
+## Human-only
+
+- Wallet unlock / transaction approvals  
+- GitHub push (done when you ask)  
+- Vercel authorize  
+- Screenshots + demo video  
+- Rise In **Submit for review**  
 - Never commit secret keys
 
 ## License
 
-MIT — Stellar testnet only. Never commit secret keys or seed phrases.
+MIT — Stellar testnet only.
