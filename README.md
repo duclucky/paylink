@@ -1,3 +1,7 @@
+
+
+https://github.com/user-attachments/assets/83c0522f-11e1-4ad9-886b-23e64f041f20
+
 # PayLink
 
 **PayLink** is a payment-request dApp on the Stellar **Testnet**: a creator makes a
@@ -170,7 +174,11 @@ GitHub Actions (`.github/workflows/ci.yml`) on push/PR to `main`/`master`:
 | Wallet options modal (multi-wallet) | <img src="docs/screenshots/wallet-picker.png" width="420" alt="Wallet options modal"> |
 | Test output (11 frontend + 8 contract passing) | <img src="docs/screenshots/tests.png" width="480" alt="Passing tests"> |
 | CI green | shown in the [CI/CD](#cicd) section above |
-| Demo video 1–2 min | _drag the recording into this cell after you record it_ |
+| Demo video 1–2 min | 
+
+https://github.com/user-attachments/assets/fd7efc23-f32e-479b-b798-634a81b8a518
+
+|
 
 ## Project structure
 
