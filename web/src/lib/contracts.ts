@@ -35,7 +35,8 @@ async function signAndSend(
   const sent = await tx.signAndSend({
     signTransaction: async (xdr: string) => {
       const signedTxXdr = await signWithKit(xdr, address);
-      return signedTxXdr;
+      // SDK's SignTransaction expects an object, not a bare string.
+      return { signedTxXdr, signerAddress: address };
     },
   });
 
