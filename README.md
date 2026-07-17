@@ -9,7 +9,7 @@ Built for Rise In **Stellar Journey to Mastery — Level 3 / Orange Belt**.
 
 ## Live demo
 
-`<PLACEHOLDER: paste Vercel URL after deploy>`
+**[paylink-navy.vercel.app](https://paylink-navy.vercel.app/)** (Stellar Testnet)
 
 ## Features
 
@@ -157,22 +157,20 @@ cd ../payrequest && cargo test --locked          # 5+ incl. inter-contract
 
 GitHub Actions (`.github/workflows/ci.yml`) on push/PR to `main`/`master`:
 
-1. **frontend:** `npm ci --ignore-scripts` → lint → test → build  
+1. **frontend:** `npm install --ignore-scripts` → lint → test → build  
 2. **contracts:** build/test `receipt`, then build/test `payrequest` (wasm order)
 
-`<PLACEHOLDER: screenshot of green CI run on GitHub Actions>`
+![Green CI run on GitHub Actions](docs/screenshots/ci-green.png)
 
 ## Screenshots (submission evidence)
 
 | Item | File / status |
 |------|----------------|
-| Mobile UI | `<PLACEHOLDER: docs/screenshots/mobile.png>` |
-| Wallet options modal | `<PLACEHOLDER: docs/screenshots/wallet-picker.png>` |
-| Create + share link | `<PLACEHOLDER: docs/screenshots/create-request.png>` |
-| Pay + receipt balance | `<PLACEHOLDER: docs/screenshots/pay-receipt.png>` |
-| CI green | `<PLACEHOLDER: docs/screenshots/ci-green.png>` |
-| Test output 3+ | Run `npm test` / `cargo test --locked` and screenshot |
-| Demo video 1–2 min | `<PLACEHOLDER: paste YouTube/Loom link>` |
+| Mobile-responsive UI | <img src="docs/screenshots/mobile.png" width="240" alt="Mobile responsive UI"> |
+| Wallet options modal (multi-wallet) | <img src="docs/screenshots/wallet-picker.png" width="420" alt="Wallet options modal"> |
+| Test output (11 frontend + 8 contract passing) | <img src="docs/screenshots/tests.png" width="480" alt="Passing tests"> |
+| CI green | shown in the [CI/CD](#cicd) section above |
+| Demo video 1–2 min | _drag the recording into this cell after you record it_ |
 
 ## Project structure
 
